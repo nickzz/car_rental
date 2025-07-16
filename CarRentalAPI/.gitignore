@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 
 **/obj/
 **/bin/
+*.dll
+*.exe
+*.pdb
