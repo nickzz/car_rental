@@ -15,7 +15,7 @@ jobs:
         image: postgres:14
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: @Bcd1234
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
           POSTGRES_DB: car_rentalDB
         ports:
           - 5432:5432
@@ -49,5 +49,5 @@ jobs:
       - name: 🧪 (Optional) EF Migrate DB
         run: dotnet ef database update
         env:
-          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=car_rentalDB;Username=postgres;Password=@Bcd1234
+          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=car_rentalDB;Username=postgres;Password=${{ secrets.DB_PASSWORD }}
 
