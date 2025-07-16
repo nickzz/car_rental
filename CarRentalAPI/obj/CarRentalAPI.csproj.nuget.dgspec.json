@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\nmhas\\Projects\\CarRentalAPI\\CarRentalAPI.csproj": {}
+    "D:\\Projects\\car_rental\\CarRentalAPI\\CarRentalAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\nmhas\\Projects\\CarRentalAPI\\CarRentalAPI.csproj": {
+    "D:\\Projects\\car_rental\\CarRentalAPI\\CarRentalAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\nmhas\\Projects\\CarRentalAPI\\CarRentalAPI.csproj",
+        "projectUniqueName": "D:\\Projects\\car_rental\\CarRentalAPI\\CarRentalAPI.csproj",
         "projectName": "CarRentalAPI",
-        "projectPath": "C:\\Users\\nmhas\\Projects\\CarRentalAPI\\CarRentalAPI.csproj",
+        "projectPath": "D:\\Projects\\car_rental\\CarRentalAPI\\CarRentalAPI.csproj",
         "packagesPath": "C:\\Users\\nmhas\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\nmhas\\Projects\\CarRentalAPI\\obj\\",
+        "outputPath": "D:\\Projects\\car_rental\\CarRentalAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -65,6 +65,10 @@
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.7, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
               "target": "Package",
               "version": "[9.0.7, )"
             },
