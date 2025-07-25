@@ -1,4 +1,4 @@
-name: .NET API CI/CD
+name: .NET API CI
 
 on:
   push:
@@ -54,4 +54,3 @@ jobs:
         run: dotnet ef database update
         env:
           ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=car_rentalDB;Username=postgres;Password=${{ secrets.DB_PASSWORD }}
-
