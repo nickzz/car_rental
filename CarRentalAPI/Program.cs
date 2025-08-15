@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +15,27 @@ var builder = WebApplication.CreateBuilder(args);
 //         .EnableSensitiveDataLogging()
 //         .LogTo(Console.WriteLine, LogLevel.Information)
 // );
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+if (string.IsNullOrEmpty(databaseUrl))
+{
+    throw new Exception("DATABASE_URL is not set");
+}
+
+// Convert URL to Npgsql connection string
+var databaseUri = new Uri(databaseUrl);
+var userInfo = databaseUri.UserInfo.Split(':');
+
+var connectionString = new NpgsqlConnectionStringBuilder
+{
+    Host = databaseUri.Host,
+    Port = databaseUri.Port,
+    Username = userInfo[0],
+    Password = userInfo[1],
+    Database = databaseUri.LocalPath.TrimStart('/'),
+    SslMode = SslMode.Require
+}.ToString();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
