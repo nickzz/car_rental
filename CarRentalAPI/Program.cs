@@ -16,20 +16,20 @@ var builder = WebApplication.CreateBuilder(args);
 //         .LogTo(Console.WriteLine, LogLevel.Information)
 // );
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-
 if (string.IsNullOrEmpty(databaseUrl))
 {
     throw new Exception("DATABASE_URL is not set");
 }
 
-// Convert URL to Npgsql connection string
 var databaseUri = new Uri(databaseUrl);
 var userInfo = databaseUri.UserInfo.Split(':');
+
+var port = databaseUri.Port != -1 ? databaseUri.Port : 5432;
 
 var connectionString = new NpgsqlConnectionStringBuilder
 {
     Host = databaseUri.Host,
-    Port = databaseUri.Port,
+    Port = port,
     Username = userInfo[0],
     Password = userInfo[1],
     Database = databaseUri.LocalPath.TrimStart('/'),
