@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+
 
 [ApiController]
 [Route("api/[controller]")]
@@ -12,13 +14,15 @@ public class CarsController : ControllerBase
         _context = context;
     }
 
-    [HttpGet]
+    // [Authorize]
+    [HttpGet("GetAllCars")]
     public async Task<IActionResult> GetAllCars()
     {
         var cars = await _context.Cars.Include(c => c.Owner).ToListAsync();
         return Ok(cars);
     }
 
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetCar(int id)
     {
@@ -27,7 +31,8 @@ public class CarsController : ControllerBase
         return Ok(car);
     }
 
-    [HttpPost]
+    [Authorize(Roles = "Owner")]
+    [HttpPost("AddCar")]
     public async Task<IActionResult> AddCar(Car car)
     {
         _context.Cars.Add(car);
@@ -35,6 +40,7 @@ public class CarsController : ControllerBase
         return Ok(car);
     }
 
+    [Authorize(Roles = "Owner")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCar(int id, Car updatedCar)
     {
@@ -50,6 +56,7 @@ public class CarsController : ControllerBase
         return Ok(car);
     }
 
+    [Authorize(Roles = "Owner")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCar(int id)
     {
