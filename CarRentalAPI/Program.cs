@@ -17,13 +17,10 @@ var builder = WebApplication.CreateBuilder(args);
 // );
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 if (string.IsNullOrEmpty(databaseUrl))
-{
     throw new Exception("DATABASE_URL is not set");
-}
 
 var databaseUri = new Uri(databaseUrl);
 var userInfo = databaseUri.UserInfo.Split(':');
-
 var port = databaseUri.Port != -1 ? databaseUri.Port : 5432;
 
 var connectionString = new NpgsqlConnectionStringBuilder
@@ -101,6 +98,14 @@ builder.Services.AddMiniProfiler(options =>
 
 
 var app = builder.Build();
+
+// 🔹 Apply pending migrations automatically on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+    Console.WriteLine("✅ Database migrations applied successfully.");
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
