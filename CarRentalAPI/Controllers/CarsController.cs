@@ -7,64 +7,64 @@ using Microsoft.AspNetCore.Authorization;
 [Route("api/[controller]")]
 public class CarsController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
+    private readonly CarService _carService;
 
-    public CarsController(ApplicationDbContext context)
+    public CarsController(CarService carService)
     {
-        _context = context;
+        _carService = carService;
     }
 
-    // [Authorize]
-    [HttpGet("GetAllCars")]
+    [Authorize(Roles = "Admin")]
+    [HttpGet("GetCars")]
     public async Task<IActionResult> GetAllCars()
     {
-        var cars = await _context.Cars.Include(c => c.Owner).ToListAsync();
+        var cars = await _carService.GetAllCars();
         return Ok(cars);
     }
 
-    [Authorize]
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetCar(int id)
+    [HttpGet("available")]
+    public async Task<IActionResult> GetAvailableCars(DateTime startDate, DateTime endDate)
     {
-        var car = await _context.Cars.FindAsync(id);
-        if (car == null) return NotFound();
-        return Ok(car);
+        if (startDate >= endDate)
+            return BadRequest("End date must be after start date");
+
+        var availableCars = await _carService.GetAvailableCarsAsync(startDate, endDate);
+        return Ok(availableCars);
     }
 
-    [Authorize(Roles = "Owner")]
+    [HttpGet("{carId}/estimate")]
+    public async Task<IActionResult> GetEstimatedPrice(int carId, DateTime startDate, DateTime endDate)
+    {
+        var totalPrice = await _carService.GetEstimatedPriceAsync(carId, startDate, endDate);
+
+        if (totalPrice == null)
+            return BadRequest("Invalid request or car not found");
+
+        return Ok(totalPrice);
+    }
+
+    [Authorize(Roles = "Admin")]
     [HttpPost("AddCar")]
     public async Task<IActionResult> AddCar(Car car)
     {
-        _context.Cars.Add(car);
-        await _context.SaveChangesAsync();
-        return Ok(car);
+        await _carService.AddCar(car);
+        return Ok("Car added");
     }
 
-    [Authorize(Roles = "Owner")]
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCar(int id, Car updatedCar)
+    [Authorize(Roles = "Admin")]
+    [HttpPut("UpdateCar/{id}")]
+    public async Task<IActionResult> UpdateCar(int id, Car car)
     {
-        var car = await _context.Cars.FindAsync(id);
-        if (car == null) return NotFound();
-
-        car.Model = updatedCar.Model;
-        car.Description = updatedCar.Description;
-        car.PricePerDay = updatedCar.PricePerDay;
-        car.IsAvailable = updatedCar.IsAvailable;
-
-        await _context.SaveChangesAsync();
-        return Ok(car);
+        await _carService.UpdateCar(id, car);
+        return Ok("Car updated");
     }
 
-    [Authorize(Roles = "Owner")]
-    [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
+    [HttpDelete("RemoveCar/{id}")]
     public async Task<IActionResult> DeleteCar(int id)
     {
-        var car = await _context.Cars.FindAsync(id);
-        if (car == null) return NotFound();
-
-        _context.Cars.Remove(car);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        await _carService.DeleteCar(id);
+        return Ok("Car deleted");
     }
+
 }

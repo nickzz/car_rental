@@ -1,40 +1,20 @@
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 // builder.Services.AddOpenApi();
-// builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//     options
-//         .UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-//         .EnableSensitiveDataLogging()
-//         .LogTo(Console.WriteLine, LogLevel.Information)
-// );
-var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-if (string.IsNullOrEmpty(databaseUrl))
-    throw new Exception("DATABASE_URL is not set");
-
-var databaseUri = new Uri(databaseUrl);
-var userInfo = databaseUri.UserInfo.Split(':');
-var port = databaseUri.Port != -1 ? databaseUri.Port : 5432;
-
-var connectionString = new NpgsqlConnectionStringBuilder
-{
-    Host = databaseUri.Host,
-    Port = port,
-    Username = userInfo[0],
-    Password = userInfo[1],
-    Database = databaseUri.LocalPath.TrimStart('/'),
-    SslMode = SslMode.Require
-}.ToString();
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options
+        .UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+        // .EnableSensitiveDataLogging()
+        // .LogTo(Console.WriteLine, LogLevel.Information)
+);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -62,26 +42,46 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-builder.Services.AddScoped<TokenService>();
 
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("CustomerOnly", policy => policy.RequireRole("Customer"));
+});
+
+
+
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<CarService>();
+builder.Services.AddScoped<RentalService>();
+
+
+// JWT Authentication
+var jwtKey = builder.Configuration["Jwt:Key"];
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new ArgumentNullException("Jwt:Key is missing in configuration"))
-            )
-        };
-    });
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = key
+    };
+});
 
-builder.Services.AddAuthorization();
+
+// builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -98,14 +98,6 @@ builder.Services.AddMiniProfiler(options =>
 
 
 var app = builder.Build();
-
-// 🔹 Apply pending migrations automatically on startup
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-    Console.WriteLine("✅ Database migrations applied successfully.");
-}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

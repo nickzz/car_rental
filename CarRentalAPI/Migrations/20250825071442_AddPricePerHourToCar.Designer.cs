@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CarRentalAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250825071442_AddPricePerHourToCar")]
+    partial class AddPricePerHourToCar
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,13 +38,8 @@ namespace CarRentalAPI.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("EstimatedPrice")
-                        .HasColumnType("numeric");
-
                     b.Property<string>("MessageToCustomer")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Notes")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("StartDate")
@@ -82,13 +80,7 @@ namespace CarRentalAPI.Migrations
                     b.Property<string>("PlateNo")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("PricePerDay")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("PricePerMonth")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("PricePerWeek")
+                    b.Property<decimal>("PricePerHour")
                         .HasColumnType("numeric");
 
                     b.Property<string>("Type")
