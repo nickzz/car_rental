@@ -6,23 +6,29 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Get the connection string (Render gives postgres:// format)
-var connString = builder.Configuration.GetConnectionString("DefaultConnection") 
-                 ?? builder.Configuration["DATABASE_URL"];
+// ✅ Handle DATABASE_URL from Render
+var dbUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+string connectionString;
 
-if (!string.IsNullOrEmpty(connString) &&
-    (connString.StartsWith("postgres://") || connString.StartsWith("postgresql://")))
+if (!string.IsNullOrEmpty(dbUrl))
 {
-    var uri = new Uri(connString);
+    // Convert DATABASE_URL → Npgsql connection string
+    var uri = new Uri(dbUrl);
     var userInfo = uri.UserInfo.Split(':');
-    connString =
-        $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true;";
-}
 
+    connectionString =
+        $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};" +
+        $"Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+}
+else
+{
+    // Fallback to local config (appsettings.json → ConnectionStrings:DefaultConnection)
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+}
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options
-        .UseNpgsql(connString)
+        .UseNpgsql(connectionString)
         // .EnableSensitiveDataLogging()
         // .LogTo(Console.WriteLine, LogLevel.Information)
 );
