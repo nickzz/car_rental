@@ -1,4 +1,6 @@
 
+using System.ComponentModel.DataAnnotations.Schema;
+
 public enum ApplicationStatus { Pending, Approved, Rejected }
 public class Booking
 {
@@ -7,8 +9,13 @@ public class Booking
     public User? User { get; set; }
     public int CarId { get; set; }
     public Car? Car { get; set; }
+
+    [Column(TypeName = "date")]
     public DateTime StartDate { get; set; }
+
+    [Column(TypeName = "date")]
     public DateTime EndDate { get; set; }
+    
     public ApplicationStatus Status { get; set; }
     public string? MessageToCustomer { get; set; }
     public string? Notes { get; set; }

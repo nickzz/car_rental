@@ -53,4 +53,4 @@ jobs:
         working-directory: ./CarRentalAPI
         run: dotnet ef database update
         env:
-          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=car_rentalDB;Username=postgres;Password=${{ secrets.DB_PASSWORD }}
+          ConnectionStrings__DefaultConnection: ${{ secrets.RENDER_DB_CONNECTION }}

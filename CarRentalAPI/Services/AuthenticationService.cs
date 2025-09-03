@@ -21,7 +21,7 @@ public class AuthService
             ICNumber = dto.NRIC,
             Email = dto.Email,
             Address = dto.Address,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             PhoneNumber = dto.PhoneNumber,
             Role = UserRole.Customer
         };
@@ -33,7 +33,7 @@ public class AuthService
     public async Task<(string Token, string Role)?> Login(LoginDto dto)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+        if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.Password))
             return null;
 
         var token = JwtHelper.GenerateToken(user, _config);

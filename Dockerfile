@@ -1,20 +1,66 @@
-# Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /src
+name: .NET API CI/CD
 
-# Copy csproj and restore dependencies
-COPY CarRentalAPI/CarRentalAPI.csproj CarRentalAPI/
-RUN dotnet restore CarRentalAPI/CarRentalAPI.csproj
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-# Copy the rest of the source code
-COPY CarRentalAPI/ CarRentalAPI/
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-# Publish the application
-WORKDIR /src/CarRentalAPI
-RUN dotnet publish -c Release -o /app
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: car_rentalDB
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
-WORKDIR /app
-COPY --from=build /app .
-ENTRYPOINT ["dotnet", "CarRentalAPI.dll"]
+    steps:
+      - name: ⬇️ Checkout Code
+        uses: actions/checkout@v3
+
+      - name: 🧰 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: 📦 Restore Dependencies
+        working-directory: ./CarRentalAPI
+        run: dotnet restore
+
+      - name: 🛠️ Build
+        working-directory: ./CarRentalAPI
+        run: dotnet build --no-restore
+
+      - name: 🧪 Run Tests (if available)
+        working-directory: ./CarRentalAPI
+        run: dotnet test --no-build --verbosity normal
+
+      - name: 🔧 Install EF Core CLI
+        run: dotnet tool install --global dotnet-ef
+
+      - name: 🧪 (Optional) EF Migrate DB
+        working-directory: ./CarRentalAPI
+        run: dotnet ef database update
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.RENDER_DB_CONNECTION }}
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚀 Trigger Render Deploy
+        run: |
+          curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json"
