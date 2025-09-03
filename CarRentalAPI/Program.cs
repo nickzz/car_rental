@@ -6,12 +6,22 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-// builder.Services.AddOpenApi();
+// Get the connection string (Render gives postgres:// format)
+var connString = builder.Configuration.GetConnectionString("DefaultConnection") 
+                 ?? builder.Configuration["DATABASE_URL"];
+
+// Convert URL to Npgsql standard format if needed
+if (connString.StartsWith("postgres://") || connString.StartsWith("postgresql://"))
+{
+    var uri = new Uri(connString);
+    var userInfo = uri.UserInfo.Split(':');
+    connString =
+        $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true;";
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options
-        .UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+        .UseNpgsql(connString)
         // .EnableSensitiveDataLogging()
         // .LogTo(Console.WriteLine, LogLevel.Information)
 );

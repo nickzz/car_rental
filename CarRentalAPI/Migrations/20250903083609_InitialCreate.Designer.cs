@@ -11,8 +11,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CarRentalAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250821030017_UpdateTables")]
-    partial class UpdateTables
+    [Migration("20250903083609_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,18 +35,33 @@ namespace CarRentalAPI.Migrations
                     b.Property<int>("CarId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("EstimatedPrice")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("MessageToCustomer")
-                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
                         .HasColumnType("text");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("date");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -69,23 +84,38 @@ namespace CarRentalAPI.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Brand")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Colour")
-                        .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
                     b.Property<string>("Model")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("PlateNo")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
+                    b.Property<decimal>("PricePerDay")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("PricePerMonth")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("PricePerWeek")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.HasKey("Id");
 
@@ -104,8 +134,13 @@ namespace CarRentalAPI.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
                     b.Property<DateTime>("DOB")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("date");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -123,7 +158,7 @@ namespace CarRentalAPI.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("PasswordHash")
+                    b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -133,6 +168,11 @@ namespace CarRentalAPI.Migrations
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.HasKey("Id");
 
