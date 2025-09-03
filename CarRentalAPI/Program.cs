@@ -124,6 +124,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseRouting();
+app.MapGet("/", () => Results.Ok("API is running 🚀"));
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
