@@ -23,7 +23,7 @@ public class AuthService
             Address = dto.Address,
             Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             PhoneNumber = dto.PhoneNumber,
-            Role = UserRole.Customer
+            Role = UserRole.Admin
         };
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
