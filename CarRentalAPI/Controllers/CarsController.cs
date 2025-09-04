@@ -43,7 +43,7 @@ public class CarsController : ControllerBase
         return Ok(totalPrice);
     }
 
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     [HttpPost("AddCar")]
     public async Task<IActionResult> AddCar(Car car)
     {
