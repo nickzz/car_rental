@@ -65,9 +65,17 @@ namespace CarRentalAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CarId");
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_Bookings_CreatedAt");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_Bookings_Status");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_Bookings_UserId");
+
+                    b.HasIndex("CarId", "StartDate", "EndDate")
+                        .HasDatabaseName("IX_Bookings_CarId_Dates");
 
                     b.ToTable("Bookings");
                 });
@@ -81,10 +89,13 @@ namespace CarRentalAPI.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Brand")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Colour")
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -92,10 +103,14 @@ namespace CarRentalAPI.Migrations
                         .HasDefaultValueSql("now()");
 
                     b.Property<string>("Model")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("PlateNo")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<decimal>("PricePerDay")
                         .HasColumnType("numeric");
@@ -107,7 +122,9 @@ namespace CarRentalAPI.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<string>("Type")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -116,7 +133,59 @@ namespace CarRentalAPI.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PlateNo")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Cars_PlateNo");
+
+                    b.HasIndex("Brand", "Model")
+                        .HasDatabaseName("IX_Cars_Brand_Model");
+
                     b.ToTable("Cars");
+                });
+
+            modelBuilder.Entity("RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("IX_RefreshTokens_ExpiresAt");
+
+                    b.HasIndex("Token")
+                        .IsUnique()
+                        .HasDatabaseName("IX_RefreshTokens_Token");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_RefreshTokens_UserId");
+
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("User", b =>
@@ -173,6 +242,17 @@ namespace CarRentalAPI.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Users_Email");
+
+                    b.HasIndex("ICNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Users_ICNumber");
+
+                    b.HasIndex("Role")
+                        .HasDatabaseName("IX_Users_Role");
+
                     b.ToTable("Users");
                 });
 
@@ -181,16 +261,27 @@ namespace CarRentalAPI.Migrations
                     b.HasOne("Car", "Car")
                         .WithMany()
                         .HasForeignKey("CarId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Car");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RefreshToken", b =>
+                {
+                    b.HasOne("User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
