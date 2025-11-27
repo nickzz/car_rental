@@ -35,7 +35,7 @@ public class CarService
         return availableCars;
     }
 
-     public async Task<decimal?> GetEstimatedPriceAsync(int carId, DateTime startDate, DateTime endDate)
+    public async Task<decimal?> GetEstimatedPriceAsync(int carId, DateTime startDate, DateTime endDate)
     {
         if (startDate >= endDate)
             return null; // invalid
@@ -86,11 +86,22 @@ public class CarService
         var car = await _context.Cars.FindAsync(id);
         if (car == null) return;
 
+        // Check if car has active bookings
+        var hasActiveBookings = await _context.Bookings
+            .Where(b => b.CarId == id && b.StartDate <= DateTime.UtcNow && b.EndDate >= DateTime.UtcNow)
+            .AnyAsync();
+
+        if (hasActiveBookings)
+            return; // Cannot update car with active bookings
+
         car.Brand = updatedCar.Brand;
         car.Type = updatedCar.Type;
         car.PlateNo = updatedCar.PlateNo;
         car.Colour = updatedCar.Colour;
         car.Model = updatedCar.Model;
+        car.PricePerDay = updatedCar.PricePerDay;
+        car.PricePerWeek = updatedCar.PricePerWeek;
+        car.PricePerMonth = updatedCar.PricePerMonth;
 
         await _context.SaveChangesAsync();
     }
@@ -98,10 +109,17 @@ public class CarService
     public async Task DeleteCar(int id)
     {
         var car = await _context.Cars.FindAsync(id);
-        if (car != null)
-        {
-            _context.Cars.Remove(car);
-            await _context.SaveChangesAsync();
-        }
+        if (car == null) return;
+
+        // Check if car has any bookings
+        var hasBookings = await _context.Bookings
+            .Where(b => b.CarId == id)
+            .AnyAsync();
+
+        if (hasBookings)
+            return; // Cannot delete car with existing bookings
+
+        _context.Cars.Remove(car);
+        await _context.SaveChangesAsync();
     }
 }

@@ -1,7 +1,7 @@
 
 using System.ComponentModel.DataAnnotations.Schema;
 
-public enum UserRole { Customer, Admin }
+public enum UserRole { Admin, Customer }
 
 public class User
 {

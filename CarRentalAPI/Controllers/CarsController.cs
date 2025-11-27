@@ -16,7 +16,6 @@ public class CarsController : ControllerBase
         _carService = carService;
     }
 
-    [Authorize(Roles = "Admin")]
     [HttpGet("GetCars")]
     public async Task<IActionResult> GetAllCars()
     {
@@ -24,6 +23,7 @@ public class CarsController : ControllerBase
         return Ok(cars);
     }
 
+    [Authorize]
     [HttpGet("available")]
     public async Task<IActionResult> GetAvailableCars(DateTime startDate, DateTime endDate)
     {
@@ -45,7 +45,7 @@ public class CarsController : ControllerBase
         return Ok(totalPrice);
     }
 
-    // [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     [HttpPost("AddCar")]
     public async Task<IActionResult> AddCar(Car car)
     {

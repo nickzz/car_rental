@@ -68,7 +68,7 @@ public class RentalService
         _context.Bookings.Add(application);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Booking {BookingId} created for user {UserId} and car {CarId}", 
+        _logger.LogInformation("Booking {BookingId} created for user {UserId} and car {CarId}",
             application.Id, userId, dto.CarId);
     }
 
@@ -93,60 +93,37 @@ public class RentalService
             .ToListAsync();
     }
 
-    public async Task ApproveApplication(int id)
+    public async Task UpdateApplicationStatus(int applicationId, string statusString, string? messageToCustomer)
     {
-        var app = await _context.Bookings
-            .Include(b => b.Car)
-            .FirstOrDefaultAsync(b => b.Id == id);
+        // Parse string status to enum
+        if (!Enum.TryParse<ApplicationStatus>(statusString, true, out var status))
+            throw new BadRequestException($"Invalid application status: {statusString}");
 
-        if (app == null)
-            throw new NotFoundException($"Booking with ID {id} not found");
+        // Find the booking/application
+        var application = await _context.Bookings.FindAsync(applicationId);
+        if (application == null)
+            throw new NotFoundException($"Booking with ID {applicationId} not found");
 
-        if (app.Status != ApplicationStatus.Pending)
-            throw new BadRequestException($"Cannot approve booking with status: {app.Status}");
+        // Update status
+        application.Status = status;
+        application.MessageToCustomer = messageToCustomer;
+        application.UpdatedAt = DateTime.UtcNow;
 
-        // Double-check availability before approving
-        var hasOverlap = await _context.Bookings
-            .AnyAsync(b =>
-                b.Id != id && // Exclude current booking
-                b.CarId == app.CarId &&
-                b.Status == ApplicationStatus.Approved &&
-                !(b.EndDate < app.StartDate || b.StartDate > app.EndDate)
-            );
-
-        if (hasOverlap)
-            throw new ConflictException("Cannot approve: Car is already booked for overlapping dates");
-
-        app.Status = ApplicationStatus.Approved;
+        // Persist status change
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Booking {BookingId} approved", id);
+        _logger.LogInformation("Booking {BookingId} status updated to {Status}",
+            applicationId, status);
     }
+    // public async Task SendMessage(int id, string message)
+    // {
+    //     var app = await _context.Bookings.FindAsync(id);
+    //     if (app == null)
+    //         throw new NotFoundException($"Booking with ID {id} not found");
 
-    public async Task RejectApplication(int id)
-    {
-        var app = await _context.Bookings.FindAsync(id);
-        if (app == null)
-            throw new NotFoundException($"Booking with ID {id} not found");
+    //     app.MessageToCustomer = message;
+    //     await _context.SaveChangesAsync();
 
-        if (app.Status != ApplicationStatus.Pending)
-            throw new BadRequestException($"Cannot reject booking with status: {app.Status}");
-
-        app.Status = ApplicationStatus.Rejected;
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Booking {BookingId} rejected", id);
-    }
-
-    public async Task SendMessage(int id, string message)
-    {
-        var app = await _context.Bookings.FindAsync(id);
-        if (app == null)
-            throw new NotFoundException($"Booking with ID {id} not found");
-
-        app.MessageToCustomer = message;
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Message sent to booking {BookingId}", id);
-    }
+    //     _logger.LogInformation("Message sent to booking {BookingId}", id);
+    // }
 }

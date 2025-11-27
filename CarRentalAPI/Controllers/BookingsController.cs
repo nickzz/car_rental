@@ -18,24 +18,36 @@ public class BookingsController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost]
-    public async Task<IActionResult> SubmitRental(BookingDto dto)
+    [HttpPost("submit-booking")]
+    public async Task<IActionResult> SubmitBooking(BookingDto dto)
     {
         foreach (var claim in User.Claims)
         {
             Console.WriteLine($"{claim.Type}: {claim.Value}");
         }
 
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        // var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdString, out int userId))
+        {
+            return BadRequest(new { message = "Invalid or missing user ID in claims" });
+        }
+
         await _rentalService.SubmitApplication(dto, userId);
-        return Ok("Application submitted");
+        return Ok(new { message = "Application submitted" });
     }
 
     [Authorize]
     [HttpGet("my")]
     public async Task<IActionResult> GetMyApplications()
     {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        // var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdString, out int userId))
+        {
+            return BadRequest(new { message = "Invalid or missing user ID in claims" });
+        }
+
         var apps = await _rentalService.GetUserApplications(userId);
         return Ok(apps);
     }
@@ -49,27 +61,19 @@ public class BookingsController : ControllerBase
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpPut("{id}/approve")]
-    public async Task<IActionResult> Approve(int id)
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> UpdateApplicationStatus(int id, ApplicationStatusDto dto)
     {
-        await _rentalService.ApproveApplication(id);
-        return Ok("Approved");
+        await _rentalService.UpdateApplicationStatus(id, dto.Status, dto.MessageToCustomer);
+        return Ok("Application status updated");
     }
 
-    [Authorize(Roles = "Admin")]
-    [HttpPut("{id}/reject")]
-    public async Task<IActionResult> Reject(int id)
-    {
-        await _rentalService.RejectApplication(id);
-        return Ok("Rejected");
-    }
-
-    [Authorize(Roles = "Admin")]
-    [HttpPost("{id}/message")]
-    public async Task<IActionResult> SendMessage(int id, MessageDto dto)
-    {
-        await _rentalService.SendMessage(id, dto.Message);
-        return Ok("Message sent");
-    }
+    // [Authorize(Roles = "Admin")]
+    // [HttpPost("{id}/message")]
+    // public async Task<IActionResult> SendMessage(int id, MessageDto dto)
+    // {
+    //     await _rentalService.SendMessage(id, dto.Message);
+    //     return Ok("Message sent");
+    // }
 
 }
