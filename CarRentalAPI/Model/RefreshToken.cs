@@ -10,7 +10,7 @@ public class RefreshToken
 
     [Required]
     [StringLength(500)]
-    public string Token { get; set; }
+    public string? Token { get; set; }
 
     [Required]
     public DateTime ExpiresAt { get; set; }

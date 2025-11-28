@@ -53,10 +53,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // ===== HEALTH CHECKS =====
 builder.Services.AddHealthChecks()
-    .AddCheck<DatabaseHealthCheck>("database", 
+    .AddCheck<DatabaseHealthCheck>("database",
         failureStatus: HealthStatus.Unhealthy,
         tags: new[] { "db", "database" })
-    .AddCheck("self", () => HealthCheckResult.Healthy("API is running"), 
+    .AddCheck("self", () => HealthCheckResult.Healthy("API is running"),
         tags: new[] { "api" });
 
 // ===== API VERSIONING =====
@@ -129,10 +129,10 @@ builder.Services.AddSwaggerGen(options =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference 
-                { 
-                    Type = ReferenceType.SecurityScheme, 
-                    Id = "Bearer" 
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
                 }
             },
             Array.Empty<string>()
@@ -222,9 +222,13 @@ builder.Services.AddCors(options =>
     }
     else
     {
-        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
-            ?? new[] { "https://car-rental-8h8v.onrender.com" };
-            
+        var allowedOrigins = new[]
+        {
+            "https://car-rental-frontend.onrender.com",
+            "https://car-rental-8h8v.onrender.com",
+            "https://car-rental-web-9mzp.onrender.com"
+        };
+
         options.AddPolicy("AllowAll", policy =>
         {
             policy.WithOrigins(allowedOrigins)
@@ -253,13 +257,13 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
-// ===== MINI PROFILER =====
-builder.Services.AddMiniProfiler(options =>
-{
-    options.RouteBasePath = "/profiler";
-    options.TrackConnectionOpenClose = true;
-    options.ColorScheme = StackExchange.Profiling.ColorScheme.Dark;
-}).AddEntityFramework();
+// ===== MINI PROFILER =====  disabled for cloud hosting
+// builder.Services.AddMiniProfiler(options =>
+// {
+//     options.RouteBasePath = "/profiler";
+//     options.TrackConnectionOpenClose = true;
+//     options.ColorScheme = StackExchange.Profiling.ColorScheme.Dark;
+// }).AddEntityFramework();
 
 // ===== BUILD APP =====
 var app = builder.Build();
@@ -269,27 +273,31 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var dbLogger = services.GetRequiredService<ILogger<Program>>();
-    
+
     try
     {
         var db = services.GetRequiredService<ApplicationDbContext>();
-        
-        if (app.Environment.IsDevelopment())
-        {
-            dbLogger.LogInformation("Applying database migrations...");
-            db.Database.Migrate();
-            dbLogger.LogInformation("Database migrations applied successfully");
-        }
-        else
-        {
-            var canConnect = await db.Database.CanConnectAsync();
-            if (!canConnect)
-            {
-                dbLogger.LogError("Cannot connect to database");
-                throw new InvalidOperationException("Database connection failed");
-            }
-            dbLogger.LogInformation("Database connection verified");
-        }
+
+        dbLogger.LogInformation("Running database migrations...");
+        db.Database.Migrate();
+        dbLogger.LogInformation("Database is up to date.");
+
+        // if (app.Environment.IsDevelopment())
+        // {
+        //     dbLogger.LogInformation("Applying database migrations...");
+        //     db.Database.Migrate();
+        //     dbLogger.LogInformation("Database migrations applied successfully");
+        // }
+        // else
+        // {
+        //     var canConnect = await db.Database.CanConnectAsync();
+        //     if (!canConnect)
+        //     {
+        //         dbLogger.LogError("Cannot connect to database");
+        //         throw new InvalidOperationException("Database connection failed");
+        //     }
+        //     dbLogger.LogInformation("Database connection verified");
+        // }
     }
     catch (Exception ex)
     {
@@ -315,49 +323,50 @@ app.UseResponseCompression();
 app.UseRequestLogging();
 app.UseGlobalExceptionHandler();
 app.UseRouting();
+app.UseCors("AllowAll");
 
-// ===== HEALTH CHECK ENDPOINTS =====
-app.MapHealthChecks("/health", new HealthCheckOptions
-{
-    ResponseWriter = async (context, report) =>
-    {
-        context.Response.ContentType = "application/json";
+// ===== HEALTH CHECK ENDPOINTS =====  //disable if debugging issues
+// app.MapHealthChecks("/health", new HealthCheckOptions
+// {
+//     ResponseWriter = async (context, report) =>
+//     {
+//         context.Response.ContentType = "application/json";
 
-        var result = JsonSerializer.Serialize(new
-        {
-            status = report.Status.ToString(),
-            checks = report.Entries.Select(e => new
-            {
-                name = e.Key,
-                status = e.Value.Status.ToString(),
-                description = e.Value.Description,
-                duration = e.Value.Duration.TotalMilliseconds,
-                data = e.Value.Data
-            }),
-            totalDuration = report.TotalDuration.TotalMilliseconds
-        }, new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
+//         var result = JsonSerializer.Serialize(new
+//         {
+//             status = report.Status.ToString(),
+//             checks = report.Entries.Select(e => new
+//             {
+//                 name = e.Key,
+//                 status = e.Value.Status.ToString(),
+//                 description = e.Value.Description,
+//                 duration = e.Value.Duration.TotalMilliseconds,
+//                 data = e.Value.Data
+//             }),
+//             totalDuration = report.TotalDuration.TotalMilliseconds
+//         }, new JsonSerializerOptions
+//         {
+//             WriteIndented = true
+//         });
 
-        await context.Response.WriteAsync(result);
-    }
-});
+//         await context.Response.WriteAsync(result);
+//     }
+// });
 
-app.MapHealthChecks("/health/ready", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("database"),
-    ResponseWriter = async (context, report) =>
-    {
-        var result = report.Status == HealthStatus.Healthy ? "Ready" : "Not Ready";
-        await context.Response.WriteAsync(result);
-    }
-});
+// app.MapHealthChecks("/health/ready", new HealthCheckOptions
+// {
+//     Predicate = check => check.Tags.Contains("database"),
+//     ResponseWriter = async (context, report) =>
+//     {
+//         var result = report.Status == HealthStatus.Healthy ? "Ready" : "Not Ready";
+//         await context.Response.WriteAsync(result);
+//     }
+// });
 
-app.MapHealthChecks("/health/live", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("api")
-});
+// app.MapHealthChecks("/health/live", new HealthCheckOptions
+// {
+//     Predicate = check => check.Tags.Contains("api")
+// });
 
 // ===== STANDARD ENDPOINTS =====
 app.MapGet("/", () => Results.Ok(new
@@ -384,11 +393,10 @@ app.MapGet("/api/info", () => Results.Ok(new
     }
 }));
 
-app.UseCors("AllowAll");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiniProfiler();
+// app.UseMiniProfiler();  disabled for cloud hosting
 app.MapControllers();
 
 // ===== STARTUP LOGGING =====
