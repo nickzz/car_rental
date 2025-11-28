@@ -223,7 +223,7 @@ builder.Services.AddCors(options =>
     else
     {
         var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
-            ?? new[] { "https://yourdomain.com" };
+            ?? new[] { "https://car-rental-8h8v.onrender.com" };
             
         options.AddPolicy("AllowAll", policy =>
         {
