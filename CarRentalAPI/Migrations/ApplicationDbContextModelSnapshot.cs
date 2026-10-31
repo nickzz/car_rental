@@ -29,6 +29,9 @@ namespace CarRentalAPI.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AdminMessage")
+                        .HasColumnType("text");
+
                     b.Property<int>("CarId")
                         .HasColumnType("integer");
 
@@ -37,14 +40,11 @@ namespace CarRentalAPI.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("now()");
 
+                    b.Property<string>("DriverLicenseUrl")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("date");
-
-                    b.Property<decimal>("EstimatedPrice")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("MessageToCustomer")
-                        .HasColumnType("text");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
@@ -54,6 +54,9 @@ namespace CarRentalAPI.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("numeric");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()

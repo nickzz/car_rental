@@ -33,7 +33,7 @@ public class BookingsController : ControllerBase
             return BadRequest(new { message = "Invalid or missing user ID in claims" });
         }
 
-        await _rentalService.SubmitApplication(dto, userId);
+        await _rentalService.SubmitBooking(dto, userId);
         return Ok(new { message = "Application submitted" });
     }
 

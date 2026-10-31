@@ -1,47 +1,33 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using Npgsql;
+using Microsoft.Extensions.Hosting;
+using CarRentalAPI.Data;
 
 public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
 {
     public ApplicationDbContext CreateDbContext(string[] args)
     {
-        string? connectionString;
+        var environmentName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+            ?? Environments.Development;
+        var basePath = Path.GetDirectoryName(typeof(ApplicationDbContextFactory).Assembly.Location)
+            ?? throw new InvalidOperationException("Could not determine the application configuration directory.");
 
-        // Check if DATABASE_URL is set (production)
-        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(basePath)
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
+            .AddUserSecrets<ApplicationDbContextFactory>(optional: true)
+            .AddEnvironmentVariables()
+            .Build();
 
-        if (!string.IsNullOrEmpty(databaseUrl))
-        {
-            var databaseUri = new Uri(databaseUrl);
-            var userInfo = databaseUri.UserInfo.Split(':');
-            var port = databaseUri.Port != -1 ? databaseUri.Port : 5432;
+        var connectionString = LocalDatabaseConfiguration.GetConnectionString(configuration);
 
-            connectionString = new NpgsqlConnectionStringBuilder
-            {
-                Host = databaseUri.Host,
-                Port = port,
-                Username = userInfo[0],
-                Password = userInfo[1],
-                Database = databaseUri.LocalPath.TrimStart('/'),
-                SslMode = SslMode.Require
-            }.ToString();
-        }
-        else
-        {
-            // Local fallback → read from appsettings.json
-            var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json")
-                .Build();
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
 
-            connectionString = config.GetConnectionString("DefaultConnection");
-        }
-
-        var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-        optionsBuilder.UseNpgsql(connectionString);
-
-        return new ApplicationDbContext(optionsBuilder.Options);
+        return new ApplicationDbContext(options);
     }
 }

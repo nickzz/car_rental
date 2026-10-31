@@ -384,7 +384,6 @@ FodyWeavers.xsd
 
 # VS Code files for those working on multiple tools
 .vscode/*
-!.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
@@ -492,4 +491,33 @@ obj/
 bin/
 .vscode/*.code-workspace
 .vscode/*.history/
+
+# Local environment and secret files
+.env.*
+!.env.example
+appsettings.Development.json
+secrets.json
+secrets.*.json
+*.secrets.json
+*.p12
+*.pem
+*.key
+
+# Temporary and test output
+*.temp
+TestResults/
+**/TestResults/
+coverage/
+coverage.*
+
+# Local database files and backups
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+*.bak
+*.backup
+*.dump
+*.sql.gz
 

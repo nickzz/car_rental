@@ -12,64 +12,51 @@ public class RentalService
         _logger = logger;
     }
 
-    public async Task SubmitApplication(BookingDto dto, int userId)
+    public async Task<decimal> CalculateFinalPrice(int carId, DateTime start, DateTime end)
+    {
+        var car = await _context.Cars.FindAsync(carId) 
+                  ?? throw new NotFoundException("Car not found");
+
+        int totalDays = (end.Date - start.Date).Days;
+        if (totalDays <= 0) throw new BadRequestException("Invalid duration");
+
+        // Tiered Pricing Engine
+        int months = totalDays / 30;
+        int remainingDays = totalDays % 30;
+        int weeks = remainingDays / 7;
+        int days = remainingDays % 7;
+
+        return (months * car.PricePerMonth) + 
+               (weeks * car.PricePerWeek) + 
+               (days * car.PricePerDay);
+    }
+
+    public async Task SubmitBooking(BookingDto dto, int userId)
     {
         var startUtc = DateTime.SpecifyKind(dto.StartDate.Date, DateTimeKind.Utc);
         var endUtc = DateTime.SpecifyKind(dto.EndDate.Date, DateTimeKind.Utc);
 
-        // Validate dates
-        if (endUtc <= startUtc)
-            throw new BadRequestException("End date must be after start date");
+        // Final availability check before save
+        var isBusy = await _context.Bookings.AnyAsync(b => 
+            b.CarId == dto.CarId && 
+            b.Status != BookingStatus.Rejected &&
+            !(b.EndDate < startUtc || b.StartDate > endUtc));
 
-        // Check if car exists
-        var car = await _context.Cars.FindAsync(dto.CarId);
-        if (car == null)
-            throw new NotFoundException($"Car with ID {dto.CarId} not found");
+        if (isBusy) throw new ConflictException("Car was booked just now.");
 
-        // ✅ Check if car is available for the selected dates
-        var hasOverlap = await _context.Bookings
-            .AnyAsync(b =>
-                b.CarId == dto.CarId &&
-                b.Status != ApplicationStatus.Rejected && // Rejected bookings don't block availability
-                !(b.EndDate < startUtc || b.StartDate > endUtc) // Overlap logic
-            );
-
-        if (hasOverlap)
-            throw new ConflictException("This car is not available for the selected dates. Please choose different dates or another car.");
-
-        var totalDays = (endUtc - startUtc).Days;
-        if (totalDays <= 0)
-            throw new BadRequestException("Invalid rental duration");
-
-        // Price breakdown
-        int months = totalDays / 30;
-        int remainingDaysAfterMonths = totalDays % 30;
-        int weeks = remainingDaysAfterMonths / 7;
-        int days = remainingDaysAfterMonths % 7;
-
-        decimal totalPrice =
-            (months * car.PricePerMonth) +
-            (weeks * car.PricePerWeek) +
-            (days * car.PricePerDay);
-
-        var application = new Booking
+        var booking = new Booking
         {
             UserId = userId,
             CarId = dto.CarId,
             StartDate = startUtc,
             EndDate = endUtc,
-            Notes = dto.Notes,
-            Status = ApplicationStatus.Pending,
-            EstimatedPrice = totalPrice,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            TotalPrice = await CalculateFinalPrice(dto.CarId, startUtc, endUtc),
+            Status = BookingStatus.Pending,
+            CreatedAt = DateTime.UtcNow
         };
 
-        _context.Bookings.Add(application);
+        _context.Bookings.Add(booking);
         await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Booking {BookingId} created for user {UserId} and car {CarId}",
-            application.Id, userId, dto.CarId);
     }
 
     public async Task<IEnumerable<Booking>> GetUserApplications(int userId)
@@ -87,7 +74,7 @@ public class RentalService
         return await _context.Bookings
             .Include(r => r.User)
             .Include(r => r.Car)
-            .Where(r => r.Status == ApplicationStatus.Pending)
+            .Where(r => r.Status == BookingStatus.Pending)
             .OrderBy(r => r.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
@@ -96,7 +83,7 @@ public class RentalService
     public async Task UpdateApplicationStatus(int applicationId, string statusString, string? messageToCustomer)
     {
         // Parse string status to enum
-        if (!Enum.TryParse<ApplicationStatus>(statusString, true, out var status))
+        if (!Enum.TryParse<BookingStatus>(statusString, true, out var status))
             throw new BadRequestException($"Invalid application status: {statusString}");
 
         // Find the booking/application
@@ -106,8 +93,7 @@ public class RentalService
 
         // Update status
         application.Status = status;
-        application.MessageToCustomer = messageToCustomer;
-        application.UpdatedAt = DateTime.UtcNow;
+        application.AdminMessage = messageToCustomer;
 
         // Persist status change
         await _context.SaveChangesAsync();

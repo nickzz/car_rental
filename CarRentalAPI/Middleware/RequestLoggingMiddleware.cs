@@ -19,7 +19,7 @@ namespace CarRentalAPI.Middleware
             var requestId = Guid.NewGuid().ToString();
 
             // Add request ID to response headers
-            context.Response.Headers.Add("X-Request-Id", requestId);
+            context.Response.Headers["X-Request-Id"] = requestId;
 
             // Log request
             _logger.LogInformation(
