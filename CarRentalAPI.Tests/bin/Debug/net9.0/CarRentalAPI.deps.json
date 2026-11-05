@@ -12,12 +12,9 @@
           "Asp.Versioning.Mvc.ApiExplorer": "8.1.0",
           "BCrypt.Net-Next": "4.0.3",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "9.0.7",
-          "Microsoft.AspNetCore.OpenApi": "9.0.5",
           "Microsoft.EntityFrameworkCore": "9.0.7",
           "Microsoft.EntityFrameworkCore.Design": "9.0.7",
           "Microsoft.EntityFrameworkCore.Tools": "9.0.7",
-          "MiniProfiler.AspNetCore.Mvc": "4.5.4",
-          "MiniProfiler.EntityFrameworkCore": "4.5.4",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4",
           "Swashbuckle.AspNetCore": "9.0.3"
         },
@@ -93,17 +90,6 @@
           "lib/net9.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll": {
             "assemblyVersion": "9.0.7.0",
             "fileVersion": "9.0.725.31702"
-          }
-        }
-      },
-      "Microsoft.AspNetCore.OpenApi/9.0.5": {
-        "dependencies": {
-          "Microsoft.OpenApi": "1.6.23"
-        },
-        "runtime": {
-          "lib/net9.0/Microsoft.AspNetCore.OpenApi.dll": {
-            "assemblyVersion": "9.0.5.0",
-            "fileVersion": "9.0.525.22904"
           }
         }
       },
@@ -649,51 +635,6 @@
           }
         }
       },
-      "MiniProfiler.AspNetCore/4.5.4": {
-        "dependencies": {
-          "MiniProfiler.Shared": "4.5.4"
-        },
-        "runtime": {
-          "lib/net8.0/MiniProfiler.AspNetCore.dll": {
-            "assemblyVersion": "4.0.0.0",
-            "fileVersion": "4.5.4.47516"
-          }
-        }
-      },
-      "MiniProfiler.AspNetCore.Mvc/4.5.4": {
-        "dependencies": {
-          "MiniProfiler.AspNetCore": "4.5.4"
-        },
-        "runtime": {
-          "lib/net8.0/MiniProfiler.AspNetCore.Mvc.dll": {
-            "assemblyVersion": "4.0.0.0",
-            "fileVersion": "4.5.4.47516"
-          }
-        }
-      },
-      "MiniProfiler.EntityFrameworkCore/4.5.4": {
-        "dependencies": {
-          "Microsoft.EntityFrameworkCore.Relational": "9.0.7",
-          "MiniProfiler.Shared": "4.5.4"
-        },
-        "runtime": {
-          "lib/net8.0/MiniProfiler.EntityFrameworkCore.dll": {
-            "assemblyVersion": "4.0.0.0",
-            "fileVersion": "4.5.4.47516"
-          }
-        }
-      },
-      "MiniProfiler.Shared/4.5.4": {
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.7"
-        },
-        "runtime": {
-          "lib/net8.0/MiniProfiler.Shared.dll": {
-            "assemblyVersion": "4.0.0.0",
-            "fileVersion": "4.5.4.47516"
-          }
-        }
-      },
       "Mono.TextTemplating/3.0.0": {
         "dependencies": {
           "System.CodeDom": "6.0.0"
@@ -920,13 +861,6 @@
       "sha512": "sha512-lloN3XvIgXmdocfghzfszOHJb45OYR3fgOg/h536o+zNB2SmP3JrqeOieCBZ7sipgGcgbxP0boA+loVhdsJxWg==",
       "path": "microsoft.aspnetcore.authentication.jwtbearer/9.0.7",
       "hashPath": "microsoft.aspnetcore.authentication.jwtbearer.9.0.7.nupkg.sha512"
-    },
-    "Microsoft.AspNetCore.OpenApi/9.0.5": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-yZLOciYlpaOO/mHPOpgeSZTv8Lc7fOOVX40eWJJoGs/S9Ny9CymDuKKQofGE9stXGGM9EEnnuPeq0fhR8kdFfg==",
-      "path": "microsoft.aspnetcore.openapi/9.0.5",
-      "hashPath": "microsoft.aspnetcore.openapi.9.0.5.nupkg.sha512"
     },
     "Microsoft.Bcl.AsyncInterfaces/7.0.0": {
       "type": "package",
@@ -1158,34 +1092,6 @@
       "sha512": "sha512-tZ1I0KXnn98CWuV8cpI247A17jaY+ILS9vvF7yhI0uPPEqF4P1d7BWL5Uwtel10w9NucllHB3nTkfYTAcHAh8g==",
       "path": "microsoft.openapi/1.6.23",
       "hashPath": "microsoft.openapi.1.6.23.nupkg.sha512"
-    },
-    "MiniProfiler.AspNetCore/4.5.4": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-meedJsjpYOeHPhE8H6t+dGQ9zLxcCQVpi4DXzmxmYAXywmTzlo6jv2IASUv5QijTU0CxsROln3FHd8RsTO8Z8A==",
-      "path": "miniprofiler.aspnetcore/4.5.4",
-      "hashPath": "miniprofiler.aspnetcore.4.5.4.nupkg.sha512"
-    },
-    "MiniProfiler.AspNetCore.Mvc/4.5.4": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-+NqXyCy9aNdroPm6leW5+cpngtCnkCdoyOlJzvVN62uucSx+MYkx8jmKbgAt+aCP6aghADfHBExwrTIldHxapg==",
-      "path": "miniprofiler.aspnetcore.mvc/4.5.4",
-      "hashPath": "miniprofiler.aspnetcore.mvc.4.5.4.nupkg.sha512"
-    },
-    "MiniProfiler.EntityFrameworkCore/4.5.4": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-SSOuBYtNbM8AMmsYMP6Edr7iBfVYzswVt/yoIDboBRLLUgkA4SyROCJuTTtZ8eJSzlNuq5DIR+BLCCcigaV/vw==",
-      "path": "miniprofiler.entityframeworkcore/4.5.4",
-      "hashPath": "miniprofiler.entityframeworkcore.4.5.4.nupkg.sha512"
-    },
-    "MiniProfiler.Shared/4.5.4": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-f8ckFm/xTS8C2Bn4BdVc94dNvg+tRfk0e4XFaETOqRi6r0PUOyn3Z9jTQCVpB3R1pP5WiRsEIrqqxux95BVpTA==",
-      "path": "miniprofiler.shared/4.5.4",
-      "hashPath": "miniprofiler.shared.4.5.4.nupkg.sha512"
     },
     "Mono.TextTemplating/3.0.0": {
       "type": "package",

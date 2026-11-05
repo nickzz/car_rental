@@ -3,7 +3,6 @@ D:\Projects\car_rental\CarRentalAPI.Tests\bin\Debug\net9.0\CoverletSourceRootsMa
 D:\Projects\car_rental\CarRentalAPI.Tests\bin\Debug\net9.0\testhost.dll
 D:\Projects\car_rental\CarRentalAPI.Tests\bin\Debug\net9.0\CarRentalAPI.deps.json
 D:\Projects\car_rental\CarRentalAPI.Tests\bin\Debug\net9.0\CarRentalAPI.runtimeconfig.json
-D:\Projects\car_rental\CarRentalAPI.Tests\bin\Debug\net9.0\appsettings.Development.json
 D:\Projects\car_rental\CarRentalAPI.Tests\bin\Debug\net9.0\appsettings.json
 D:\Projects\car_rental\CarRentalAPI.Tests\bin\Debug\net9.0\CarRentalAPI.staticwebassets.endpoints.json
 D:\Projects\car_rental\CarRentalAPI.Tests\bin\Debug\net9.0\CarRentalAPI.exe
