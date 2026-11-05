@@ -27,7 +27,7 @@ namespace CarRentalAPI.Tests.Services
 
             // Setup real configuration (not mock)
             var configBuilder = new ConfigurationBuilder();
-            configBuilder.AddInMemoryCollection(new Dictionary<string, string>
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 {"Jwt:Key", "ThisIsASecretKeyThatShouldBeLongEnoughForTesting123456"},
                 {"Jwt:Issuer", "CarRentalAPI"},
@@ -286,7 +286,7 @@ namespace CarRentalAPI.Tests.Services
             var loginResult = await _authService.Login(loginDto);
 
             // Act - Logout
-            await _authService.Logout(loginResult.RefreshToken, user.Id);
+            await _authService.Logout(loginResult.RefreshToken!, user.Id);
 
             // Assert
             var revokedToken = await _context.RefreshTokens

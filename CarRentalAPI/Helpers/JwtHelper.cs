@@ -14,14 +14,14 @@ public static class JwtHelper
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
             new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Unique token ID
             new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()) // Issued at
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]));
+        var key = GetSigningKey(config);
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var expiresInMinutes = int.Parse(config["Jwt:ExpiresInMinutes"] ?? "60");
@@ -60,7 +60,7 @@ public static class JwtHelper
             ValidateIssuerSigningKey = true,
             ValidIssuer = config["Jwt:Issuer"],
             ValidAudience = config["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"])),
+            IssuerSigningKey = GetSigningKey(config),
             ValidateLifetime = false // Don't validate expiration - we want to get principal even if expired
         };
 
@@ -98,7 +98,7 @@ public static class JwtHelper
             ValidateIssuerSigningKey = true,
             ValidIssuer = config["Jwt:Issuer"],
             ValidAudience = config["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"])),
+            IssuerSigningKey = GetSigningKey(config),
             ValidateLifetime = true, // Check if token is expired
             ClockSkew = TimeSpan.Zero // No tolerance for expiration
         };
@@ -157,6 +157,13 @@ public static class JwtHelper
         {
             return null;
         }
+    }
+
+    private static SymmetricSecurityKey GetSigningKey(IConfiguration config)
+    {
+        var key = config["Jwt:Key"]
+            ?? throw new InvalidOperationException("JWT signing key is not configured.");
+        return new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
     }
 
     /// <summary>

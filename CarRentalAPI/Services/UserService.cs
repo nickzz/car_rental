@@ -7,7 +7,7 @@ public class UserService {
         _context = context;
     }
 
-    public async Task<User> GetProfile(int userId) {
+    public async Task<User?> GetProfile(int userId) {
         return await _context.Users.FindAsync(userId);
     }
 

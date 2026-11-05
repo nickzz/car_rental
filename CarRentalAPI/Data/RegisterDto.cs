@@ -49,7 +49,7 @@ public class AgeValidationAttribute : ValidationAttribute
         _minimumAge = minimumAge;
     }
 
-    protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
         if (value is DateTime dateOfBirth)
         {
