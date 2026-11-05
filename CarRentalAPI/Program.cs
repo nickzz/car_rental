@@ -7,6 +7,7 @@ using CarRentalAPI.Middleware;
 using CarRentalAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -54,7 +55,21 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options =>
     options.Level = System.IO.Compression.CompressionLevel.Fastest);
 
 builder.Services.AddControllers(options => options.MaxModelBindingCollectionSize = 1000)
-    .ConfigureApiBehaviorOptions(options => options.SuppressModelStateInvalidFilter = true);
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState.Values
+                .SelectMany(value => value.Errors)
+                .Select(error => string.IsNullOrWhiteSpace(error.ErrorMessage)
+                    ? "The request body is invalid."
+                    : error.ErrorMessage)
+                .Distinct()
+                .ToList();
+
+            return new BadRequestObjectResult(ApiResponse.ErrorResult("Validation failed", errors));
+        };
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>

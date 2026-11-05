@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [ApiVersion("1.0")]
@@ -21,12 +20,6 @@ public class BookingsController : ControllerBase
     [HttpPost("submit-booking")]
     public async Task<IActionResult> SubmitBooking(BookingDto dto)
     {
-        foreach (var claim in User.Claims)
-        {
-            Console.WriteLine($"{claim.Type}: {claim.Value}");
-        }
-
-        // var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(userIdString, out int userId))
         {
@@ -41,7 +34,6 @@ public class BookingsController : ControllerBase
     [HttpGet("my")]
     public async Task<IActionResult> GetMyApplications()
     {
-        // var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(userIdString, out int userId))
         {

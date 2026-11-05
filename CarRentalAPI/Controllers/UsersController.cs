@@ -23,16 +23,6 @@ public class UsersController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values
-                .SelectMany(v => v.Errors)
-                .Select(e => e.ErrorMessage)
-                .ToList();
-
-            return BadRequest(ApiResponse.ErrorResult("Validation failed", errors));
-        }
-
         var result = await _authService.Register(dto);
         return Ok(ApiResponse<string>.SuccessResponse(result, "Registration successful"));
     }
@@ -40,16 +30,6 @@ public class UsersController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values
-                .SelectMany(v => v.Errors)
-                .Select(e => e.ErrorMessage)
-                .ToList();
-
-            return BadRequest(ApiResponse.ErrorResult("Validation failed", errors));
-        }
-
         var tokens = await _authService.Login(dto);
         return Ok(ApiResponse<TokenResponse>.SuccessResponse(tokens, "Login successful"));
     }
@@ -57,16 +37,6 @@ public class UsersController : ControllerBase
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
     {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values
-                .SelectMany(v => v.Errors)
-                .Select(e => e.ErrorMessage)
-                .ToList();
-
-            return BadRequest(ApiResponse.ErrorResult("Validation failed", errors));
-        }
-
         // Get the access token from Authorization header
         var accessToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         if (string.IsNullOrEmpty(accessToken))
@@ -82,7 +52,9 @@ public class UsersController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] RefreshTokenDto dto)
     {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized(ApiResponse.ErrorResult("Invalid or missing user ID in claims"));
+
         await _authService.Logout(dto.RefreshToken, userId);
         return Ok(ApiResponse.SuccessResult("Logged out successfully"));
     }
@@ -91,7 +63,9 @@ public class UsersController : ControllerBase
     [HttpPost("logout-all")]
     public async Task<IActionResult> LogoutAll()
     {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized(ApiResponse.ErrorResult("Invalid or missing user ID in claims"));
+
         await _authService.LogoutAll(userId);
         return Ok(ApiResponse.SuccessResult("Logged out from all devices successfully"));
     }

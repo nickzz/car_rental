@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using CarRentalAPI.Exceptions;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace CarRentalAPI.Middleware
 {
@@ -69,6 +71,13 @@ namespace CarRentalAPI.Middleware
                     context.Response.StatusCode = (int)HttpStatusCode.Conflict;
                     response.Success = false;
                     response.Message = conflictEx.Message;
+                    break;
+
+                case DbUpdateException updateException when
+                    updateException.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation }:
+                    context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                    response.Success = false;
+                    response.Message = "A record with the same unique value already exists.";
                     break;
 
                 default:
