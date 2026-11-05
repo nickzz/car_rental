@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 
@@ -20,22 +19,22 @@ public class CarsController : ControllerBase
     public async Task<IActionResult> GetAllCars()
     {
         var cars = await _carService.GetAllCars();
-        return Ok(cars);
+        return Ok(cars.Select(CarResponseDto.From));
     }
 
     [Authorize]
     [HttpGet("available")]
-    public async Task<IActionResult> GetAvailableCars(DateTime startDate, DateTime endDate)
+    public async Task<IActionResult> GetAvailableCars(DateOnly startDate, DateOnly endDate)
     {
         if (startDate >= endDate)
             return BadRequest("End date must be after start date");
 
         var availableCars = await _carService.GetAvailableCarsAsync(startDate, endDate);
-        return Ok(availableCars);
+        return Ok(availableCars.Select(CarResponseDto.From));
     }
 
     [HttpGet("{carId}/estimate")]
-    public async Task<IActionResult> GetEstimatedPrice(int carId, DateTime startDate, DateTime endDate)
+    public async Task<IActionResult> GetEstimatedPrice(int carId, DateOnly startDate, DateOnly endDate)
     {
         var totalPrice = await _carService.GetEstimatedPriceAsync(carId, startDate, endDate);
 
@@ -47,7 +46,7 @@ public class CarsController : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpPost("AddCar")]
-    public async Task<IActionResult> AddCar(Car car)
+    public async Task<IActionResult> AddCar(CarDto car)
     {
         await _carService.AddCar(car);
         return Ok("Car added");
@@ -55,7 +54,7 @@ public class CarsController : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpPut("UpdateCar/{id}")]
-    public async Task<IActionResult> UpdateCar(int id, Car car)
+    public async Task<IActionResult> UpdateCar(int id, CarDto car)
     {
         await _carService.UpdateCar(id, car);
         return Ok("Car updated");

@@ -1,98 +1,59 @@
+using CarRentalAPI.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 public class CarService
 {
     private readonly ApplicationDbContext _context;
 
-    public CarService(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    public CarService(ApplicationDbContext context) => _context = context;
 
-    public async Task<IEnumerable<Car>> GetAllCars()
-    {
-        return await _context.Cars.ToListAsync();
-    }
+    public async Task<IEnumerable<Car>> GetAllCars() =>
+        await _context.Cars.AsNoTracking().ToListAsync();
 
-    public async Task<List<Car>> GetAvailableCarsAsync(DateTime startDate, DateTime endDate)
+    public async Task<List<Car>> GetAvailableCarsAsync(DateOnly startDate, DateOnly endDate)
     {
-        startDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc);
-        endDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc);
+        var start = startDate.ToDateTime(TimeOnly.MinValue);
+        var end = endDate.ToDateTime(TimeOnly.MinValue);
 
-        var unavailableCarIds = await _context.Bookings
-            .Where(b =>
-                // Overlapping logic
-                !(b.EndDate < startDate || b.StartDate > endDate)
-            )
-            .Select(b => b.CarId)
-            .Distinct()
+        return await _context.Cars
+            .AsNoTracking()
+            .Where(car => !_context.Bookings.Any(booking =>
+                booking.CarId == car.Id &&
+                BookingStatusRules.BlockingStatuses.Contains(booking.Status) &&
+                booking.StartDate < end && start < booking.EndDate))
             .ToListAsync();
-
-        var availableCars = await _context.Cars
-            .Where(c => !unavailableCarIds.Contains(c.Id))
-            .ToListAsync();
-
-        return availableCars;
     }
 
-    public async Task<decimal?> GetEstimatedPriceAsync(int carId, DateTime startDate, DateTime endDate)
+    public async Task<decimal?> GetEstimatedPriceAsync(int carId, DateOnly startDate, DateOnly endDate)
     {
-        if (startDate >= endDate)
-            return null; // invalid
-
-        var car = await _context.Cars.FindAsync(carId);
-        if (car == null)
-            return null; // car not found
-
-        var totalDays = (endDate - startDate).Days;
-        if (totalDays <= 0)
+        if (endDate <= startDate)
             return null;
 
-        decimal totalPrice;
-
-        if (totalDays >= 30)
-        {
-            var months = totalDays / 30;
-            var remainingDays = totalDays % 30;
-            totalPrice = (months * car.PricePerMonth) + (remainingDays * car.PricePerDay);
-        }
-        else if (totalDays >= 7)
-        {
-            var weeks = totalDays / 7;
-            var remainingDays = totalDays % 7;
-            totalPrice = (weeks * car.PricePerWeek) + (remainingDays * car.PricePerDay);
-        }
-        else
-        {
-            totalPrice = totalDays * car.PricePerDay;
-        }
-
-        return totalPrice;
+        var car = await _context.Cars.FindAsync(carId);
+        return car is null ? null : RentalPricing.Calculate(car, startDate, endDate);
     }
 
-    public async Task<Car> GetCarById(int id)
-    {
-        return await _context.Cars.FindAsync(id);
-    }
+    public async Task<Car?> GetCarById(int id) => await _context.Cars.FindAsync(id);
 
-    public async Task AddCar(Car car)
+    public async Task AddCar(CarDto dto)
     {
-        _context.Cars.Add(car);
+        _context.Cars.Add(dto.ToEntity());
         await _context.SaveChangesAsync();
     }
 
-    public async Task UpdateCar(int id, Car updatedCar)
+    public async Task UpdateCar(int id, CarDto updatedCar)
     {
-        var car = await _context.Cars.FindAsync(id);
-        if (car == null) return;
+        var car = await _context.Cars.FindAsync(id)
+            ?? throw new NotFoundException($"Car with ID {id} not found");
 
-        // Check if car has active bookings
-        var hasActiveBookings = await _context.Bookings
-            .Where(b => b.CarId == id && b.StartDate <= DateTime.UtcNow && b.EndDate >= DateTime.UtcNow)
-            .AnyAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow).ToDateTime(TimeOnly.MinValue);
+        var hasActiveBookings = await _context.Bookings.AnyAsync(booking =>
+            booking.CarId == id &&
+            BookingStatusRules.BlockingStatuses.Contains(booking.Status) &&
+            booking.StartDate <= today && today < booking.EndDate);
 
         if (hasActiveBookings)
-            return; // Cannot update car with active bookings
+            throw new ConflictException("A car with an active booking cannot be updated.");
 
         car.Brand = updatedCar.Brand;
         car.Type = updatedCar.Type;
@@ -108,16 +69,18 @@ public class CarService
 
     public async Task DeleteCar(int id)
     {
-        var car = await _context.Cars.FindAsync(id);
-        if (car == null) return;
+        var car = await _context.Cars.FindAsync(id)
+            ?? throw new NotFoundException($"Car with ID {id} not found");
 
-        // Check if car has any bookings
-        var hasBookings = await _context.Bookings
-            .Where(b => b.CarId == id)
-            .AnyAsync();
+        var hasBlockingBookings = await _context.Bookings.AnyAsync(booking =>
+            booking.CarId == id && BookingStatusRules.BlockingStatuses.Contains(booking.Status));
 
-        if (hasBookings)
-            return; // Cannot delete car with existing bookings
+        if (hasBlockingBookings)
+            throw new ConflictException("A car with a blocking booking cannot be deleted.");
+
+        var hasBookingHistory = await _context.Bookings.AnyAsync(booking => booking.CarId == id);
+        if (hasBookingHistory)
+            throw new ConflictException("A car with booking history cannot be deleted.");
 
         _context.Cars.Remove(car);
         await _context.SaveChangesAsync();
